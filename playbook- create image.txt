@@ -1,0 +1,31 @@
+---
+- hosts: ansible
+  become: true
+
+  vars:
+    dockerhub_username: mmgad
+    image_name: regapp
+    image_tag: latest
+
+  tasks:
+
+  - name: Docker login using access token
+    docker_login:
+      username: "{{ dockerhub_username }}"
+      # do not forget to  export DOCKERHUB_TOKEN=xxxxx
+      password: "{{ lookup('env', 'DOCKERHUB_TOKEN') }}"
+
+  - name: Build docker image
+    command: docker build -t {{ image_name }}:{{ image_tag }} .
+    args:
+      chdir: /opt/docker
+
+  - name: Tag image for Docker Hub
+    command: >
+      docker tag
+      {{ image_name }}:{{ image_tag }}
+      {{ dockerhub_username }}/{{ image_name }}:{{ image_tag }}
+
+  - name: Push image to Docker Hub
+    command: docker push {{ dockerhub_username }}/{{ image_name }}:{{ image_tag }}
+
